@@ -10,13 +10,13 @@ import io
 import platform
 from matplotlib import font_manager, rc 
 import os 
-import shutil # 폰트 캐시 제거를 위해 추가
+# import shutil # 오류의 원인이 되는 폰트 캐시 제거 라이브러리 및 로직을 제거했습니다.
 
 # 경고 메시지 무시 설정
 warnings.filterwarnings('ignore')
 
 # ----------------------------------------------------
-# 0. 한글 폰트 설정 (V4.0 - Streamlit Cloud 강제 적용 로직)
+# 0. 한글 폰트 설정 (V4.0 - Streamlit Cloud 오류 수정)
 # ----------------------------------------------------
 
 def set_korean_font():
@@ -24,33 +24,24 @@ def set_korean_font():
     font_path_cloud = os.path.join(os.getcwd(), "fonts", "NanumGothic.ttf")
     
     if platform.system() == 'Windows':
+        # (Windows 로컬 환경)
         try:
             font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
             rc('font', family=font_name)
         except:
             rc('font', family='sans-serif')
     elif platform.system() == 'Darwin':
+        # (Mac 로컬 환경)
         rc('font', family='AppleGothic')
     else:
         # Streamlit Cloud (Linux) 환경 강제 적용
-        
-        # 1. 폰트 캐시 제거 (가장 확실한 방법)
-        cache_dir = font_manager.get_cachedir()
-        if os.path.exists(cache_dir):
-            try:
-                # st.warning(f"폰트 캐시 디렉토리 제거 시도: {cache_dir}") # 디버깅용
-                shutil.rmtree(cache_dir)
-            except Exception as e:
-                pass
-                # st.error(f"폰트 캐시 제거 실패: {e}") # 디버깅용
-
-        # 2. 폰트 파일 등록 및 설정
+        # 폰트 파일 등록 및 설정만 남겨 오류를 해결합니다.
         if os.path.exists(font_path_cloud):
             font_manager.fontManager.addfont(font_path_cloud)
             font_name_nanum = font_manager.FontProperties(fname=font_path_cloud).get_name()
             rc('font', family=font_name_nanum)
         else:
-            # st.error(f"NanumGothic.ttf 파일 경로를 찾을 수 없습니다: {font_path_cloud}") # 디버깅용
+            # 폰트 파일이 없으면 기본 설정으로 fallback
             rc('font', family='sans-serif')
             
     plt.rcParams['axes.unicode_minus'] = False # 마이너스 기호 깨짐 방지
