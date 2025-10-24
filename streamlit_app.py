@@ -9,36 +9,55 @@ import warnings
 import io
 import platform
 from matplotlib import font_manager, rc 
-import os # 폰트 파일 경로 확인을 위해 추가
+import os 
+import shutil # 폰트 캐시 제거를 위해 추가
 
 # 경고 메시지 무시 설정
 warnings.filterwarnings('ignore')
 
 # ----------------------------------------------------
-# 0. 한글 폰트 설정 (V4.0 - Streamlit Cloud 최적화)
+# 0. 한글 폰트 설정 (V4.0 - Streamlit Cloud 강제 적용 로직)
 # ----------------------------------------------------
 
-# Streamlit Cloud 환경에서 폰트 문제 해결
-if platform.system() == 'Windows':
-    try:
-        font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
-        rc('font', family=font_name)
-    except:
-        rc('font', family='sans-serif')
-elif platform.system() == 'Darwin':
-    rc('font', family='AppleGothic')
-else:
-    # Streamlit Cloud(Linux) 환경에서 나눔고딕 폰트 파일 사용을 가정
-    # GitHub 저장소 루트에 fonts 폴더와 NanumGothic.ttf 파일을 업로드해야 합니다.
-    font_path = "fonts/NanumGothic.ttf"
-    if os.path.exists(font_path):
-        font_manager.fontManager.addfont(font_path)
-        rc('font', family='NanumGothic')
+def set_korean_font():
+    # 폰트 경로 지정 (GitHub/fonts/NanumGothic.ttf 가정)
+    font_path_cloud = os.path.join(os.getcwd(), "fonts", "NanumGothic.ttf")
+    
+    if platform.system() == 'Windows':
+        try:
+            font_name = font_manager.FontProperties(fname="c:/Windows/Fonts/malgun.ttf").get_name()
+            rc('font', family=font_name)
+        except:
+            rc('font', family='sans-serif')
+    elif platform.system() == 'Darwin':
+        rc('font', family='AppleGothic')
     else:
-        # 폰트 파일이 없으면 기본 설정으로 fallback
-        rc('font', family='sans-serif')
+        # Streamlit Cloud (Linux) 환경 강제 적용
         
-plt.rcParams['axes.unicode_minus'] = False
+        # 1. 폰트 캐시 제거 (가장 확실한 방법)
+        cache_dir = font_manager.get_cachedir()
+        if os.path.exists(cache_dir):
+            try:
+                # st.warning(f"폰트 캐시 디렉토리 제거 시도: {cache_dir}") # 디버깅용
+                shutil.rmtree(cache_dir)
+            except Exception as e:
+                pass
+                # st.error(f"폰트 캐시 제거 실패: {e}") # 디버깅용
+
+        # 2. 폰트 파일 등록 및 설정
+        if os.path.exists(font_path_cloud):
+            font_manager.fontManager.addfont(font_path_cloud)
+            font_name_nanum = font_manager.FontProperties(fname=font_path_cloud).get_name()
+            rc('font', family=font_name_nanum)
+        else:
+            # st.error(f"NanumGothic.ttf 파일 경로를 찾을 수 없습니다: {font_path_cloud}") # 디버깅용
+            rc('font', family='sans-serif')
+            
+    plt.rcParams['axes.unicode_minus'] = False # 마이너스 기호 깨짐 방지
+    
+# 폰트 설정 함수 호출
+set_korean_font()
+
 # ----------------------------------------------------
 
 st.set_page_config(page_title="사용계약률 평가/미래예측 시뮬레이터 (V4.0 - 혼합 평가지표 적용)", layout="wide")
@@ -419,7 +438,7 @@ if uploaded_file:
             st.sidebar.error("Gap 경계값과 부여 점수의 개수가 일치하지 않습니다. (경계값-1 = 점수 개수)")
             valid_criteria = False
             
-        abs_rate_bins_str = abs_rate_bins_str.replace('[', '').replace(']', '') # 리스트 형식으로 입력될 경우 대비
+        abs_rate_bins_str = abs_rate_bins_str.replace('[', '').replace(']', '') 
         abs_rate_labels_str = abs_rate_labels_str.replace('[', '').replace(']', '')
             
         abs_rate_bins_list = [float(x.strip()) for x in abs_rate_bins_str.split(',') if x.strip()]
@@ -450,7 +469,7 @@ if uploaded_file:
         final_score_df = calculate_score_2026_v4(
             data_merged, predicted_col_name, target_goal, 
             gap_bins_list, gap_labels_list, 
-            abs_rate_bins_list, abs_rate_labels_list, 
+            abs_bins_list, abs_labels_list, 
             gap_ratio, abs_rate_ratio,
             df_other_score_rates, SCORE_WEIGHTS
         )
