@@ -10,13 +10,12 @@ import io
 import platform
 from matplotlib import font_manager, rc 
 import os 
-# import shutil # 오류의 원인이 되는 폰트 캐시 제거 라이브러리 및 로직을 제거했습니다.
 
 # 경고 메시지 무시 설정
 warnings.filterwarnings('ignore')
 
 # ----------------------------------------------------
-# 0. 한글 폰트 설정 (V4.0 - Streamlit Cloud 오류 수정)
+# 0. 한글 폰트 설정 (V4.1 - Streamlit Cloud 오류 수정 및 폰트 강제 적용)
 # ----------------------------------------------------
 
 def set_korean_font():
@@ -35,7 +34,7 @@ def set_korean_font():
         rc('font', family='AppleGothic')
     else:
         # Streamlit Cloud (Linux) 환경 강제 적용
-        # 폰트 파일 등록 및 설정만 남겨 오류를 해결합니다.
+        # 폰트 파일 등록 및 설정
         if os.path.exists(font_path_cloud):
             font_manager.fontManager.addfont(font_path_cloud)
             font_name_nanum = font_manager.FontProperties(fname=font_path_cloud).get_name()
@@ -51,8 +50,8 @@ set_korean_font()
 
 # ----------------------------------------------------
 
-st.set_page_config(page_title="사용계약률 평가/미래예측 시뮬레이터 (V4.0 - 혼합 평가지표 적용)", layout="wide")
-st.title("🏆 도시가스 사용계약률 평가/미래예측 시뮬레이터 (V4.0)")
+st.set_page_config(page_title="사용계약률 평가/미래예측 시뮬레이터 (V4.1 - 혼합 평가지표 적용)", layout="wide")
+st.title("🏆 도시가스 사용계약률 평가/미래예측 시뮬레이터 (V4.1)")
 st.caption("Gap과 절대 계약률을 **혼합**하여 **911점 충족**을 위한 최적 배점 비율을 시뮬레이션합니다.")
 
 # ----------------------------------------------------
@@ -87,7 +86,7 @@ st.sidebar.markdown("---")
 
 
 # --- 🌟 사용계약률 100점 지표 배점 로직 설정 ---
-st.sidebar.subheader("💯 사용계약률 100점 평가지표 구성 (V4.0)")
+st.sidebar.subheader("💯 사용계약률 100점 평가지표 구성 (V4.1)")
 
 # 1. 혼합 평가지표 비율 설정
 st.sidebar.markdown("##### 1. Gap 및 절대 계약률 비율 설정 (합산 100%)")
@@ -456,11 +455,11 @@ if uploaded_file:
         predicted_col_name = f"예측_{target_year}년_12월"
         data_merged = data_analysis.merge(pred_df, on="센터명", how="left")
         
-        # 5-2. 2026년 예측치 기반 평가 점수 시뮬레이션 (V4.0 혼합 로직 사용)
+        # 5-2. 2026년 예측치 기반 평가 점수 시뮬레이션 (V4.1 혼합 로직 사용 - NameError 수정)
         final_score_df = calculate_score_2026_v4(
             data_merged, predicted_col_name, target_goal, 
             gap_bins_list, gap_labels_list, 
-            abs_bins_list, abs_labels_list, 
+            abs_rate_bins_list, abs_rate_labels_list, # <--- NameError 수정된 부분
             gap_ratio, abs_rate_ratio,
             df_other_score_rates, SCORE_WEIGHTS
         )
@@ -469,7 +468,7 @@ if uploaded_file:
         # 6. 최종 분석 결과 및 시각화
         # ----------------------------------------------------
         st.markdown("---")
-        st.header(f"🔍 2026년 12월 예측 평가 시뮬레이션 결과 (V4.0 - 혼합 평가지표 적용)")
+        st.header(f"🔍 2026년 12월 예측 평가 시뮬레이션 결과 (V4.1 - 혼합 평가지표 적용)")
 
         # 6-1. 결과표 (핵심 정보)
         core_cols = (
@@ -611,7 +610,7 @@ if uploaded_file:
 
         csv = final_download_df.to_csv(index=False).encode("utf-8-sig")
         st.download_button("결과 CSV 다운로드", data=csv, 
-                           file_name=f"사용계약률_평가시뮬레이션_V4.0_혼합평가지표_결과.csv", mime="text/csv")
+                           file_name=f"사용계약률_평가시뮬레이션_V4.1_혼합평가지표_결과.csv", mime="text/csv")
         
         st.markdown(f"""
         ---
